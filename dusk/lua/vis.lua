@@ -45,7 +45,6 @@ function M.fixed_cols(cols, to_items_func)
     return function(wnd)
         local items = to_items_func(wnd.body or {})
         local line_count = math.ceil(#items / cols)
-        print(line_count)
         local lines = times(line_count, const(''))
         local col_size = math.floor(wnd.int.size.x / cols) - 1
         local i = 1
@@ -61,7 +60,7 @@ function M.fixed_cols(cols, to_items_func)
     end
 end
 
-function M.plain_text(text)
+function M.plain_text()
     return function(wnd)
         local lines = split_text(wnd.body, nl_sep)
         set_buf(wnd, lines)

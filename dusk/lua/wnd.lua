@@ -83,10 +83,6 @@ local function update_wnd(wnd)
             y = calc_int_pos_comp(sub.y, wnd.pos.y, sy),
         },
     }
-    local no_render = wnd.render == nil
-    if not no_render then
-        wnd.render(wnd)
-    end
 end
 
 local function get_wnd_opts(wnd)
@@ -215,8 +211,12 @@ end
 function M.render(id)
     local wnd = M.get(id)
     local no_int = wnd.int == nil
+    local no_render = wnd.render == nil
     if no_int then
         update_wnd(wnd)
+    end
+    if not no_render then
+        wnd.render(wnd)
     end
 end
 

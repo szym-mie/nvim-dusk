@@ -40,7 +40,7 @@ local function key_chain_path(key_chain)
     return '<space>' .. key_chain
 end
 
-local function init_key_action(key_chain, key_action)
+local function bind_on_key(key_chain, key_action)
     vim.keymap.set('n', key_chain_path(key_chain), key_action)
 end
 
@@ -137,15 +137,15 @@ local function new_act_undef(key_chain)
 end
 
 local function setup_action(key_chain, action)
-    init_key_action(key_chain, action.act)
+    bind_on_key(key_chain, action.act)
 end
 
 local function setup_level(key_chain, level)
-    init_key_action(key_chain, new_act_help(key_chain, level))
+    bind_on_key(key_chain, new_act_help(key_chain, level))
 end
 
 local function setup_nil(key_chain)
-    init_key_action(key_chain, new_act_undef(key_chain))
+    bind_on_key(key_chain, new_act_undef(key_chain))
 end
 
 local function close_wnds()
@@ -156,25 +156,23 @@ end
 local function level_to_items(level)
     local entries = {}
     for key, entry in pairs(level.lvl) do
-        entry.key = key
-        table.insert(entries, entry)
+        table.insert(entries, { key = key, entry = entry, })
     end
     table.sort(entries, function(a, b)
-        if a.type == b.type then
+        if a.entry.type == b.entry.type then
             return a.key < b.key
         else
-            return a.type == 'lvl'
+            return a.entry.type == 'lvl'
         end
     end)
     local items = {}
     for _, entry in ipairs(entries) do
-        local item = escape_key_chain(entry.key)
-        if entry.type == 'lvl' then
-            item = item .. ' +' .. entry.info
+        local key = escape_key_chain(entry.key)
+        local pre = '  '
+        if entry.entry.type == 'lvl' then
+            pre = ' +'
         end
-        if entry.type == 'act' then
-            item = item .. ' ' .. entry.info
-        end
+        local item = key .. pre .. entry.entry.info
         table.insert(items, item)
     end
     return items
@@ -230,10 +228,12 @@ function M.act(opts)
     }
 end
 
+local function dpy_sink(out) end
+
 function M.vim(opts)
     local info = opts.info
     local vim_cmd = opts.cmd
-    local dpy_func = opts.dpy or print
+    local dpy_func = opts.dpy or dpy_sink
     return {
         type = 'act',
         info = info,

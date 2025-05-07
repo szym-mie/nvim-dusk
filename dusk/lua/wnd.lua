@@ -29,14 +29,14 @@ local function on_screen_update()
     M.update_all()
 end
 
-local anchor_align = {
+local anchor_align_sub = {
     NW = { x = 0, y = 0, },
     NE = { x = 1, y = 0, },
     SW = { x = 0, y = 1, },
     SE = { x = 1, y = 1, },
 }
 
-local function calc_int_size_comp(align, comp, scr_size_comp)
+local function calc_int_size_comp(sub, comp, scr_size_comp)
     local ref = comp.ref
     local val = comp.val
     if ref == 'abs' then
@@ -48,18 +48,18 @@ local function calc_int_size_comp(align, comp, scr_size_comp)
     error('unknown size reference ' .. ref)
 end
 
-local function calc_int_pos_comp(align, comp, scr_size_comp)
+local function calc_int_pos_comp(sub, comp, scr_size_comp)
     local ref = comp.ref
     local val = comp.val
     if ref == 'abs' then
-        if align then
-            return scr_size_comp - val
+        if sub == 1 then
+            return scr_size_comp - val - 2
         else
             return val
         end
     end
     if ref == 'pct' then
-        if align then
+        if sub == 1 then
             return scr_size_comp * (1.0 - val)
         else
             return scr_size_comp * val
@@ -71,16 +71,16 @@ end
 local function update_wnd(wnd)
     local sx = M.scr_size.x
     local sy = M.scr_size.y
-    local align = anchor_align[wnd.anchor]
+    local sub = anchor_align_sub[wnd.anchor]
 
     wnd.int = {
         size = {
-            x = calc_int_size_comp(align.x, wnd.size.x, sx),
-            y = calc_int_size_comp(align.y, wnd.size.y, sy),
+            x = calc_int_size_comp(sub.x, wnd.size.x, sx),
+            y = calc_int_size_comp(sub.y, wnd.size.y, sy),
         },
         pos = {
-            x = calc_int_pos_comp(align.x, wnd.pos.x, sx),
-            y = calc_int_pos_comp(align.y, wnd.pos.y, sy),
+            x = calc_int_pos_comp(sub.x, wnd.pos.x, sx),
+            y = calc_int_pos_comp(sub.y, wnd.pos.y, sy),
         },
     }
     local no_render = wnd.render == nil
@@ -93,14 +93,20 @@ local function get_wnd_opts(wnd)
     if wnd.int == nil then
         update_wnd(wnd)
     end
+    print('== ' .. wnd.title)
+    print(wnd.int.pos.x)
+    print(wnd.int.pos.y)
+    print(wnd.int.size.x)
+    print(wnd.int.size.y)
     local wnd_opts = {
-        row = wnd.int.pos.x,
-        col = wnd.int.pos.y,
+        col = wnd.int.pos.x,
+        row = wnd.int.pos.y,
         width = wnd.int.size.x,
         height = wnd.int.size.y,
         anchor = wnd.anchor,
         title = ' ' .. wnd.title .. ' ',
         title_pos = wnd.title_align,
+        focusable = wnd.input,
         relative = 'editor',
         border = 'rounded',
         style = 'minimal',
@@ -143,7 +149,6 @@ function M.update_all()
     for _, wnd in pairs(M.wnds) do
         -- recalculate pos, size
         update_wnd(wnd)
-        reopen_wnd(wnd)
     end
 end
 
@@ -171,6 +176,7 @@ function M.new(opts)
             render = render,
             body = {},
             show = false,
+            input = opts.input or true,
             wnd_id = nil,
             buf_id = buf_id,
         }
@@ -208,9 +214,9 @@ end
 
 function M.render(id)
     local wnd = M.get(id)
-    local no_render = wnd.render == nil
-    if not no_render then
-        wnd.render(wnd)
+    local no_int = wnd.int == nil
+    if no_int then
+        update_wnd(wnd)
     end
 end
 

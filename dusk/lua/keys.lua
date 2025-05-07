@@ -2,6 +2,7 @@ local M = {}
 
 local wnd = require 'wnd'
 local vis = require 'vis'
+local cmd = require 'cmd'
 
 local alt_key_chars = {
     [' '] = 'space',
@@ -99,17 +100,6 @@ local function merge_in_tree(tree, key_chain, entry, merge_func)
     end
 end
 
-local function get_in_tree(tree, key_chain)
-    local level = tree
-    for key in key_chain:gmatch('.') do
-        if level == nil then
-            return nil
-        end
-        level = level[key]
-    end
-    return level
-end
-
 local function put_entry(key_chain, entry)
     local merge_func = nil
     if entry.type == 'lvl' then
@@ -123,15 +113,7 @@ local function put_entry(key_chain, entry)
             return n
         end
     end
-    print('merge ' .. entry.type)
     merge_in_tree(M.tree, key_chain, entry, merge_func)
-end
-
-local function new_act_undef(key_chain)
-    return function()
-        local text_key_chain = escape_key_chain(key_chain)
-        print('unknown command ' .. text_key_chain)
-    end
 end
 
 local function new_act_help(key_chain, level)
@@ -139,8 +121,18 @@ local function new_act_help(key_chain, level)
         local text_key_chain = escape_key_chain(key_chain)
         wnd.rename(M.help_wnd, text_key_chain .. ' map')
         wnd.bind(M.help_wnd, level)
-        wnd.show(M.help_wnd)
         wnd.render(M.help_wnd)
+        wnd.show(M.help_wnd)
+    end
+end
+
+local function new_act_undef(key_chain)
+    return function()
+        local text_key_chain = escape_key_chain(key_chain)
+        wnd.rename(M.undef_wnd, text_key_chain .. ' - undef')
+        wnd.bind(M.undef_wnd, ' unknown command ' .. text_key_chain)
+        wnd.render(M.undef_wnd)
+        wnd.show(M.undef_wnd)
     end
 end
 
@@ -149,7 +141,6 @@ local function setup_action(key_chain, action)
 end
 
 local function setup_level(key_chain, level)
-    print(key_chain .. ' ' .. level.info)
     init_key_action(key_chain, new_act_help(key_chain, level))
 end
 
@@ -159,6 +150,7 @@ end
 
 local function close_wnds()
     wnd.hide(M.help_wnd)
+    wnd.hide(M.undef_wnd)
 end
 
 local function level_to_items(level)
@@ -179,11 +171,9 @@ local function level_to_items(level)
         local item = escape_key_chain(entry.key)
         if entry.type == 'lvl' then
             item = item .. ' +' .. entry.info
-            print(item)
         end
         if entry.type == 'act' then
             item = item .. ' ' .. entry.info
-            print(item)
         end
         table.insert(items, item)
     end
@@ -198,14 +188,27 @@ function M.init(opts)
     end
     walk_tree(M.tree, setup_action, setup_level, setup_nil)
     setup_level('', M.tree)
+
     M.help_wnd = wnd.new {
         id = 'keys:help',
         pos = { x = '0u', y = '0u', },
-        size = { x = '100%', y = '8u', },
+        size = { x = '100%', y = '3u', },
         title = 'key-help',
-        render = vis.fixed_cols(4, level_to_items)
+        anchor = 'SW',
+        render = vis.fixed_cols(4, level_to_items),
+        input = false,
     }
-    -- vim.on_key(close_wnds)
+    M.undef_wnd = wnd.new {
+        id = 'keys:undef',
+        pos = { x = '0u', y = '0u', },
+        size = { x = '30u', y = '1u', },
+        title = 'key-undef',
+        anchor = 'SW',
+        render = vis.plain_text(),
+        input = false,
+    }
+
+    vim.on_key(close_wnds)
 end
 
 function M.lvl(opts)
@@ -227,13 +230,14 @@ function M.act(opts)
     }
 end
 
-function M.cmd(opts)
+function M.vim(opts)
     local info = opts.info
-    local cmd = opts.cmd
+    local vim_cmd = opts.cmd
+    local dpy_func = opts.dpy or print
     return {
         type = 'act',
         info = info,
-        act = function() pcall(vim.cmd(cmd)) end,
+        act = function() dpy_func(cmd.exec_vim(vim_cmd)) end,
     }
 end
 

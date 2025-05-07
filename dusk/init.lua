@@ -18,3 +18,5 @@ keys.init {
         ['ve'] = keys.vim { cmd = ':Lex', info = 'toggle explorer vis' },
     }
 }
+
+file.init {}

@@ -1,8 +1,9 @@
-FROM fedora:latest@sha256:ee88ab8a5c8bf78687ddcecadf824767e845adc19d8cdedb56f48521eb162b43
+FROM alpine:latest@sha256:a8560b36e8b8210634f77d9f7f9efd7ffa463e380b75e2e74aff4511df3ef88c
 
-RUN dnf install -y neovim
+RUN apk add --no-cache neovim
 
-RUN useradd -m dev
+RUN adduser -D dev
 USER dev
 WORKDIR /home/dev
+
 CMD [ "nvim" ]

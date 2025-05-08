@@ -40,10 +40,10 @@ local function calc_int_size_comp(sub, comp, scr_size_comp)
     local ref = comp.ref
     local val = comp.val
     if ref == 'abs' then
-        return val
+        return math.floor(val)
     end
     if ref == 'pct' then
-        return scr_size_comp * val
+        return math.floor(scr_size_comp * val)
     end
     error('unknown size reference ' .. ref)
 end
@@ -53,7 +53,7 @@ local function calc_int_pos_comp(sub, comp, scr_size_comp)
     local val = comp.val
     if ref == 'abs' then
         if sub == 1 then
-            return scr_size_comp - val - 2
+            return scr_size_comp - val - 1
         else
             return val
         end
@@ -148,13 +148,29 @@ function M.update_all()
     end
 end
 
+---create a new hidden window
+---@class TaggedVec xy vector, with absolute (50u) & relative values (50%)
+---@field x string x component
+---@field y string y component
+---
+---@class NewOpts opts for wnd.new
+---@field id string unique window id handle
+---@field pos TaggedVec window position in abs/rel units
+---@field size TaggedVec window size in abs/rel units
+---@field anchor string? window corner anchor: 'NW' (default), 'NE', 'SW', 'SE'
+---@field title string? window title, displayed on top border
+---@field render function? rendering function - render(wnd.body), called int.
+---@field input boolean? can the window accept user input
+---
+---@param opts NewOpts
+---@return string
 function M.new(opts)
     local id = opts.id;
     if id == nil then
         error('window id is nil')
     end
     if M.wnds[id] == nil then
-        local buf_id = vim.api.nvim_create_buf(false, true)
+        local buf_id = vim.api.nvim_create_buf(true, true)
         if buf_id == 0 then
             error('could not create a buffer')
         end
@@ -241,6 +257,11 @@ function M.hide(id)
         close_wnd(wnd)
         wnd.show = false
     end
+end
+
+function M.focus(id)
+    local wnd = M.get(id)
+    vim.api.nvim_set_current_win(wnd.wnd_id)
 end
 
 function M.bind(id, body)

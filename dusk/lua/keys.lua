@@ -156,6 +156,7 @@ end
 local function level_to_items(level)
     local entries = {}
     for key, entry in pairs(level.lvl) do
+        print(key .. ' ' .. tostring(entry))
         table.insert(entries, { key = key, entry = entry, })
     end
     table.sort(entries, function(a, b)
@@ -172,7 +173,8 @@ local function level_to_items(level)
         if entry.entry.type == 'lvl' then
             pre = ' +'
         end
-        local item = key .. pre .. entry.entry.info
+        local info = entry.entry.info or ''
+        local item = key .. pre .. info
         table.insert(items, item)
     end
     return items

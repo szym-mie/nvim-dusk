@@ -14,8 +14,7 @@ keys.init {
         ['qq'] = keys.vim { cmd = ':wq', info = 'quit current window' },
         ['qa'] = keys.vim { cmd = ':wqa', info = 'save all & quit' },
         ['qd'] = keys.vim { cmd = ':qa!', info = 'discard & quit' },
-        ['v']  = keys.lvl { info = 'Visibility' },
-        ['ve'] = keys.vim { cmd = ':Lex', info = 'toggle explorer vis' },
+        ['f']  = keys.act { act = file.view, info = 'view files' },
     }
 }
 

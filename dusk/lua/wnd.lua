@@ -1,5 +1,7 @@
 local M = {}
 
+local u = require 'u'
+
 local function parse_vec_comp(comp)
     local num = tonumber(comp:match('^%-?%d+'))
     if num < 0 then
@@ -232,7 +234,7 @@ function M.render(id)
         update_wnd(wnd)
     end
     if not no_render then
-        wnd.render(wnd)
+        vim.schedule(function() wnd.render(wnd) end)
     end
 end
 

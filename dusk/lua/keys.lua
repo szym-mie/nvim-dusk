@@ -121,8 +121,10 @@ local function new_act_help(key_chain, level)
         local text_key_chain = escape_key_chain(key_chain)
         wnd.rename(M.help_wnd, text_key_chain .. ' map')
         wnd.bind(M.help_wnd, level)
-        wnd.render(M.help_wnd)
-        wnd.show(M.help_wnd)
+        vim.schedule(function()
+            wnd.render(M.help_wnd)
+            wnd.show(M.help_wnd)
+        end)
     end
 end
 
@@ -156,7 +158,6 @@ end
 local function level_to_items(level)
     local entries = {}
     for key, entry in pairs(level.lvl) do
-        print(key .. ' ' .. tostring(entry))
         table.insert(entries, { key = key, entry = entry, })
     end
     table.sort(entries, function(a, b)

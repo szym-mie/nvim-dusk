@@ -161,11 +161,26 @@ end
 ---@field size TaggedVec window size in abs/rel units
 ---@field anchor string? window corner anchor: 'NW' (default), 'NE', 'SW', 'SE'
 ---@field title string? window title, displayed on top border
----@field render function? rendering function - render(wnd.body), called int.
+---@field title_align string? align: 'left' (default), 'center', 'right'
+---@field render function? buffer rendering function - render(wnd.body)
 ---@field input boolean? can the window accept user input
 ---
+---@class Wnd wnd descriptor object
+---@field id string unique window id handle
+---@field pos TaggedVec window position in abs/rel units
+---@field size TaggedVec window size in abs/rel units
+---@field anchor string window corner anchor: 'NW' (default), 'NE', 'SW', 'SE'
+---@field title string window title, displayed on top border
+---@field title_align string align: 'left' (default), 'center', 'right'
+---@field render function? rendering function - render(wnd.body), called int.
+---@field body any body supplied to render function
+---@field show boolean is window shown
+---@field input boolean can the window accept user input
+---@field wnd_id number? window id, nil when hidden
+---@field buf_id number persistent buffer id
+---
 ---@param opts NewOpts
----@return string
+---@return Wnd
 function M.new(opts)
     local id = opts.id;
     if id == nil then
@@ -194,40 +209,27 @@ function M.new(opts)
             wnd_id = nil,
             buf_id = buf_id,
         }
-        M.wnds[id] = wnd
-        return id
+        return wnd
     end
     error('window by this id already exists')
 end
 
-function M.get(id)
-    local wnd = M.wnds[id]
-    if wnd == nil then
-        error('unknown window id')
-    end
-    return wnd
-end
-
-function M.move(id, pos)
-    local wnd = M.get(id)
+function M.move(wnd, pos)
     wnd.pos = parse_vec(pos)
-    M.reconf(id)
+    M.reconf(wnd)
 end
 
-function M.resize(id, size)
-    local wnd = M.get(id)
+function M.resize(wnd, size)
     wnd.size = parse_vec(size)
-    M.reconf(id)
+    M.reconf(wnd)
 end
 
-function M.rename(id, title)
-    local wnd = M.get(id)
+function M.rename(wnd, title)
     wnd.title = title
-    M.reconf(id)
+    M.reconf(wnd)
 end
 
-function M.render(id)
-    local wnd = M.get(id)
+function M.render(wnd)
     local no_int = wnd.int == nil
     local no_render = wnd.render == nil
     if no_int then
@@ -238,49 +240,38 @@ function M.render(id)
     end
 end
 
-function M.reconf(id)
-    local wnd = M.get(id)
+function M.reconf(wnd)
     if wnd.show then
         reopen_wnd(wnd)
     end
 end
 
-function M.show(id)
-    local wnd = M.get(id)
+function M.show(wnd)
     if not wnd.show then
         reopen_wnd(wnd)
         wnd.show = true
     end
 end
 
-function M.hide(id)
-    local wnd = M.get(id)
+function M.hide(wnd)
     if wnd.show then
         close_wnd(wnd)
         wnd.show = false
     end
 end
 
-function M.focus(id)
-    local wnd = M.get(id)
+function M.focus(wnd)
     vim.api.nvim_set_current_win(wnd.wnd_id)
 end
 
-function M.bind(id, body)
-    local wnd = M.get(id)
+function M.bind(wnd, body)
     wnd.body = body
+    M.render(wnd)
 end
 
-function M.get_body(id)
-    local wnd = M.get(id)
-    return wnd.body
-end
-
-function M.del(id)
-    local wnd = M.get(id)
+function M.del(wnd)
     close_wnd(wnd)
     vim.api.nvim_buf_delete(wnd.buf_id, { unload = true })
-    M.wnds[id] = nil
 end
 
 return M

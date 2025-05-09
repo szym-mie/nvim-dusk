@@ -21,7 +21,7 @@ function M.init(_)
 end
 
 function M.view()
-    if not wnd.get(M.view_wnd).show then
+    if not M.view_wnd.show then
         wnd.show(M.view_wnd)
         wnd.focus(M.view_wnd)
         cmd.exec_vim(':Ex')
